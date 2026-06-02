@@ -1,26 +1,145 @@
 @import "tailwindcss";
+@import "tw-animate-css";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  /* shadcn/ui required tokens — light theme only */
+  --color-background: hsl(0 0% 96%);
+  --color-foreground: hsl(220 13% 13%);
+  --color-card: hsl(0 0% 100%);
+  --color-card-foreground: hsl(220 13% 13%);
+  --color-popover: hsl(0 0% 100%);
+  --color-popover-foreground: hsl(220 13% 13%);
+  --color-primary: hsl(123 48% 33%);
+  --color-primary-foreground: hsl(0 0% 100%);
+  --color-secondary: hsl(120 8% 95%);
+  --color-secondary-foreground: hsl(220 13% 20%);
+  --color-muted: hsl(220 9% 95%);
+  --color-muted-foreground: hsl(220 8% 55%);
+  --color-accent: hsl(122 39% 92%);
+  --color-accent-foreground: hsl(123 48% 25%);
+  --color-destructive: hsl(0 72% 51%);
+  --color-destructive-foreground: hsl(0 0% 100%);
+  --color-border: hsl(220 13% 91%);
+  --color-input: hsl(220 13% 91%);
+  --color-ring: hsl(123 48% 33%);
+
+  --color-sidebar-bg: #ffffff;
+  --color-sidebar-border: #eaecef;
+  --color-sidebar-nav-active-bg: #f0f7f1;
+  --color-sidebar-nav-active-text: #2e7d32;
+  --color-sidebar-nav-idle-text: #6b7280;
+  --color-sidebar-nav-hover-bg: #f9fafb;
+
+  --color-topbar-bg: #ffffff;
+  --color-topbar-border: #eaecef;
+
+  --color-progress-track: #e8f5e9;
+  --color-progress-fill: #4caf50;
+
+  --color-toggle-on: #4caf50;
+  --color-toggle-off: #d1d5db;
+
+  --radius-lg: 0.75rem;
+  --radius-md: 0.5rem;
+  --radius-sm: 0.25rem;
+
+  --font-sans: var(--font-inter), system-ui, sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+:root {
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-panel: 0 4px 12px rgba(0, 0, 0, 0.07), 0 2px 4px rgba(0, 0, 0, 0.04);
+  --shadow-topbar: 0 1px 0 #eaecef;
+
+  --sidebar-bg: #ffffff;
+  --sidebar-border: #eaecef;
+  --sidebar-nav-active-bg: #f0f7f1;
+  --sidebar-nav-active-text: #2e7d32;
+  --sidebar-nav-idle-text: #6b7280;
+  --sidebar-nav-hover-bg: #f9fafb;
+
+  --topbar-bg: #ffffff;
+  --topbar-border: #eaecef;
+
+  --toggle-on: #4caf50;
+  --toggle-off: #d1d5db;
+
+  --radius: 0.75rem;
+}
+
+@layer base {
+  * {
+    border-color: hsl(220 13% 91%);
+  }
+  html,
+  body {
+    background-color: hsl(0 0% 96%);
+    color: hsl(220 13% 13%);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+  ::selection {
+    background-color: hsl(122 39% 92%);
+    color: hsl(123 48% 25%);
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer utilities {
+  @keyframes value-update {
+    0% {
+      opacity: 0.4;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+
+  @keyframes progress-fill {
+    from {
+      width: 0%;
+    }
+    to {
+      width: var(--progress-target, 100%);
+    }
+  }
+
+  @keyframes blink {
+    0%,
+    50% {
+      opacity: 1;
+    }
+    51%,
+    100% {
+      opacity: 0;
+    }
+  }
+
+  @keyframes shimmer {
+    0% {
+      background-position: -200% 0;
+    }
+    100% {
+      background-position: 200% 0;
+    }
+  }
+
+  .animate-value-update {
+    animation: value-update 0.3s ease-out;
+  }
+  .animate-progress-fill {
+    animation: progress-fill 0.8s ease-out forwards;
+  }
+  .animate-cursor-blink {
+    animation: blink 1s step-end infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .animate-value-update,
+    .animate-progress-fill,
+    .animate-cursor-blink {
+      animation: none;
+    }
+  }
 }

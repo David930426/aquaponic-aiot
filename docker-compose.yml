@@ -1,0 +1,45 @@
+# Optional: standalone MongoDB just for AquaWatch.
+# Skip this file entirely if you reuse your existing MongoDB — just point
+# DATABASE_URL at that instance in .env. (Your existing Mongo must ALSO be
+# a replica set; Prisma's MongoDB connector requires it.)
+#
+# Port 27018 is used so it does NOT clash with the typical default 27017
+# you probably have running for another project.
+#
+# Start:   docker compose up -d
+# Stop:    docker compose down
+# Reset:   docker compose down -v   (also wipes the data volume)
+#
+# This config runs Mongo as a single-node replica set (rs0) without auth,
+# which is the simplest setup Prisma is happy with for local dev.
+# Do NOT use this configuration in production.
+
+services:
+  mongo:
+    image: mongo:7
+    container_name: aquawatch-mongo
+    restart: unless-stopped
+    ports:
+      - "27018:27017"
+    command: ["mongod", "--replSet", "rs0", "--bind_ip_all"]
+    healthcheck:
+      # Auto-initiate the replica set on first boot.
+      test: |
+        mongosh --quiet --eval "
+          try { rs.status() }
+          catch (e) {
+            rs.initiate({
+              _id: 'rs0',
+              members: [{ _id: 0, host: 'localhost:27017' }]
+            })
+          }
+        "
+      interval: 5s
+      timeout: 10s
+      retries: 20
+      start_period: 15s
+    volumes:
+      - aquawatch_mongo_data:/data/db
+
+volumes:
+  aquawatch_mongo_data:

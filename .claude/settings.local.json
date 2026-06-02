@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm --version)",
+      "Bash(pnpm add *)",
+      "Bash(curl -s -X PATCH \"http://localhost:3001/api/devices/dev-005\" -H \"Content-Type: application/json\" -d \"{\\\\\"enabled\\\\\":true}\")",
+      "Bash(curl -s \"http://localhost:3001/api/alerts?zoneId=zone-001\")",
+      "Bash(curl -s \"http://localhost:3001/api/schedules?zoneId=zone-001\")",
+      "Bash(curl -s \"http://localhost:3001/api/history?deviceId=dev-002&hours=24\")"
+    ]
+  }
+}

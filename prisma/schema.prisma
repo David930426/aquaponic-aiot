@@ -1,0 +1,169 @@
+// AquaWatch — Smart Aquaponics AIoT
+// MongoDB datasource. String IDs (mapped to _id) so we keep stable slugs like "dev-001".
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  email        String   @unique
+  name         String
+  passwordHash String
+  role         String   @default("operator") // operator | admin
+  createdAt    DateTime @default(now())
+
+  sessions Session[]
+}
+
+model Session {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  token     String   @unique
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model Zone {
+  id        String     @id @map("_id")
+  name      String
+  devices   Device[]
+  alerts    Alert[]
+  schedules Schedule[]
+  createdAt DateTime   @default(now())
+}
+
+model Device {
+  id           String   @id @map("_id")
+  zoneId       String
+  zone         Zone     @relation(fields: [zoneId], references: [id])
+  name         String
+  deviceType   String   // pump | sensor_temp | sensor_ph | sensor_level | sensor_do | feeder | lighting | aeration
+  status       String   // running | active | calibrating | scheduled | idle | on | offline
+  isEnabled    Boolean  @default(true)
+  readingLabel String?
+  readingValue String?
+  readingRaw   Float?
+  readingUnit  String?
+  safeMin      Float?
+  safeMax      Float?
+  updatedAt    DateTime @updatedAt
+  createdAt    DateTime @default(now())
+
+  readings SensorReading[]
+  alerts   Alert[]
+}
+
+model SensorReading {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  deviceId   String
+  device     Device   @relation(fields: [deviceId], references: [id])
+  value      Float
+  unit       String?
+  recordedAt DateTime @default(now())
+
+  @@index([deviceId, recordedAt])
+}
+
+model Alert {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  zoneId      String
+  zone        Zone     @relation(fields: [zoneId], references: [id])
+  deviceId    String
+  device      Device   @relation(fields: [deviceId], references: [id])
+  deviceName  String
+  severity    String   // warning | critical | info
+  message     String
+  isRead      Boolean  @default(false)
+  isResolved  Boolean  @default(false)
+  triggeredAt DateTime @default(now())
+}
+
+model Schedule {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  zoneId      String
+  zone        Zone      @relation(fields: [zoneId], references: [id])
+  deviceId    String?
+  name        String
+  description String?
+  cron        String
+  action      String
+  isEnabled   Boolean   @default(true)
+  nextRunAt   DateTime?
+  lastRunAt   DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  notifications Notification[]
+}
+
+model Notification {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  scheduleId  String?   @db.ObjectId
+  schedule    Schedule? @relation(fields: [scheduleId], references: [id], onDelete: SetNull)
+  title       String
+  body        String
+  isRead      Boolean   @default(false)
+  isDismissed Boolean   @default(false)
+  snoozeUntil DateTime?
+  triggeredAt DateTime  @default(now())
+
+  @@index([snoozeUntil])
+  @@index([isDismissed, triggeredAt])
+}
+
+model PushSubscription {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  userAgent String?
+  userId    String?  @db.ObjectId
+  createdAt DateTime @default(now())
+}
+
+/// Key-value store for runtime app settings (data source, refresh intervals, etc.)
+/// Values are JSON-encoded strings so we can mix scalar + object configs in one collection.
+model Setting {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  key       String   @unique
+  value     String
+  updatedAt DateTime @updatedAt
+}
+
+/// API keys used by external IoT gateways / sensors to POST readings.
+/// Only `keyPrefix` is shown after creation; the full key is shown ONCE.
+/// `keyHash` is an HMAC of the raw key (so a DB leak doesn't expose live keys).
+model ApiKey {
+  id         String    @id @default(auto()) @map("_id") @db.ObjectId
+  label      String
+  keyPrefix  String    @unique // first 8 chars of the raw key — for human display
+  keyHash    String    @unique
+  isRevoked  Boolean   @default(false)
+  lastUsedAt DateTime?
+  createdAt  DateTime  @default(now())
+}
+
+/// Sensor readings that crossed a device's safe range. Kept FOREVER (no TTL)
+/// because anomaly history matters for audits, root-cause work, model training.
+/// Raw `SensorReading` docs get auto-pruned by TTL, but anomalies persist.
+model SensorAnomaly {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  deviceId   String
+  value      Float
+  unit       String?
+  safeMin    Float?
+  safeMax    Float?
+  severity   String   // "warning" | "critical"
+  alertId    String?  @db.ObjectId
+  recordedAt DateTime @default(now())
+
+  @@index([deviceId, recordedAt])
+  @@index([severity, recordedAt])
+}

@@ -2,6 +2,7 @@
 // Used by both the per-sensor REST routes and the in-process simulator.
 
 import { prisma } from "./prisma";
+import { getThresholdSettings, isSensorMetric } from "./thresholds";
 
 export interface IngestReading {
   /** Device document id (e.g. "dev-003"). */
@@ -22,8 +23,6 @@ export interface IngestResult {
   message?: string;
   error?: string;
 }
-
-const DELTA_FACTOR = 0.1; // 10% past safe range = critical
 
 /**
  * Persist a reading, update the parent device's "current reading" snapshot,
@@ -63,12 +62,19 @@ export async function ingestReading(r: IngestReading): Promise<IngestResult> {
     data: { readingRaw: r.value, readingValue: formatted },
   });
 
-  // 3. Anomaly detection
-  const { breach, severity } = classify(
-    r.value,
-    device.safeMin,
-    device.safeMax,
-  );
+  // 3. Resolve thresholds: per-device override first, then global metric default.
+  const thresholds = await getThresholdSettings();
+  let safeMin = device.safeMin;
+  let safeMax = device.safeMax;
+  if ((safeMin == null || safeMax == null) && isSensorMetric(device.deviceType)) {
+    const fallback = thresholds.defaults[device.deviceType];
+    safeMin = safeMin ?? fallback.min;
+    safeMax = safeMax ?? fallback.max;
+  }
+
+  // 4. Anomaly detection
+  const deltaFactor = Math.max(0, thresholds.criticalDeltaPercent) / 100;
+  const { breach, severity } = classify(r.value, safeMin, safeMax, deltaFactor);
 
   if (!breach) {
     return { deviceId: device.id, stored: true, isAnomaly: false };
@@ -79,8 +85,8 @@ export async function ingestReading(r: IngestReading): Promise<IngestResult> {
     device.name,
     r.value,
     unit,
-    device.safeMin,
-    device.safeMax,
+    safeMin,
+    safeMax,
   );
 
   const alert = await prisma.alert.create({
@@ -101,8 +107,8 @@ export async function ingestReading(r: IngestReading): Promise<IngestResult> {
       deviceId: device.id,
       value: r.value,
       unit,
-      safeMin: device.safeMin,
-      safeMax: device.safeMax,
+      safeMin,
+      safeMax,
       severity,
       alertId: alert.id,
       recordedAt,
@@ -122,12 +128,13 @@ function classify(
   value: number,
   safeMin: number | null,
   safeMax: number | null,
+  deltaFactor: number,
 ): { breach: boolean; severity: "warning" | "critical" } {
   if (safeMin == null && safeMax == null) {
     return { breach: false, severity: "warning" };
   }
   const range = (safeMax ?? value) - (safeMin ?? value);
-  const margin = Math.abs(range * DELTA_FACTOR) || 0;
+  const margin = Math.abs(range * deltaFactor) || 0;
 
   if (safeMax != null && value > safeMax) {
     return {

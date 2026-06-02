@@ -5,6 +5,7 @@ import {
   Bell,
   CalendarDays,
   Cpu,
+  FlaskConical,
   LayoutDashboard,
   Leaf,
   Settings,
@@ -26,6 +27,7 @@ const navItems: {
   { labelKey: "nav.analytics", href: "/analytics", icon: TrendingUp },
   { labelKey: "nav.schedules", href: "/schedules", icon: CalendarDays },
   { labelKey: "nav.alerts", href: "/alerts", icon: Bell },
+  { labelKey: "nav.testing", href: "/testing", icon: FlaskConical },
   { labelKey: "nav.settings", href: "/settings", icon: Settings },
 ];
 

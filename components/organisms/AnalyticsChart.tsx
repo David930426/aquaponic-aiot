@@ -49,7 +49,7 @@ export function AnalyticsChart({
 
   const chartData =
     data?.readings.map((r) => ({
-      t: format(new Date(r.t), "HH:mm"),
+      ts: new Date(r.t).getTime(),
       v: r.v,
     })) ?? [];
 
@@ -71,11 +71,16 @@ export function AnalyticsChart({
             <LineChart data={chartData}>
               <CartesianGrid stroke="#EAECEF" strokeDasharray="3 3" />
               <XAxis
-                dataKey="t"
+                dataKey="ts"
+                type="number"
+                scale="time"
+                domain={["dataMin", "dataMax"]}
                 stroke="#9CA3AF"
                 fontSize={11}
                 tickLine={false}
                 axisLine={false}
+                minTickGap={40}
+                tickFormatter={(v) => format(new Date(v as number), "HH:mm")}
               />
               <YAxis
                 stroke="#9CA3AF"
@@ -90,6 +95,9 @@ export function AnalyticsChart({
                   borderRadius: 8,
                   border: "1px solid #E4E7EC",
                 }}
+                labelFormatter={(v) =>
+                  format(new Date(v as number), "MMM d, HH:mm")
+                }
                 formatter={(value) => [`${value}${unit}`, ""]}
               />
               <Line

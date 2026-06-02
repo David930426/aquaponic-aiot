@@ -65,16 +65,16 @@ export function WaterQualityChart() {
             >
               <defs>
                 <linearGradient id="grad-ph" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#81C784" stopOpacity={0.55} />
-                  <stop offset="95%" stopColor="#81C784" stopOpacity={0.05} />
-                </linearGradient>
-                <linearGradient id="grad-temp" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#4CAF50" stopOpacity={0.5} />
-                  <stop offset="95%" stopColor="#4CAF50" stopOpacity={0.05} />
-                </linearGradient>
-                <linearGradient id="grad-do" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#2E7D32" stopOpacity={0.5} />
                   <stop offset="95%" stopColor="#2E7D32" stopOpacity={0.05} />
+                </linearGradient>
+                <linearGradient id="grad-temp" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#F59E0B" stopOpacity={0.5} />
+                  <stop offset="95%" stopColor="#F59E0B" stopOpacity={0.05} />
+                </linearGradient>
+                <linearGradient id="grad-do" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#1565C0" stopOpacity={0.5} />
+                  <stop offset="95%" stopColor="#1565C0" stopOpacity={0.05} />
                 </linearGradient>
               </defs>
               <CartesianGrid stroke="#EAECEF" strokeDasharray="3 3" />
@@ -111,7 +111,7 @@ export function WaterQualityChart() {
                 type="monotone"
                 dataKey="pH"
                 name={t("dashboard.chart.legend.ph")}
-                stroke="#81C784"
+                stroke="#2E7D32"
                 strokeWidth={2}
                 fill="url(#grad-ph)"
               />
@@ -119,7 +119,7 @@ export function WaterQualityChart() {
                 type="monotone"
                 dataKey="Temp"
                 name={t("dashboard.chart.legend.temp")}
-                stroke="#4CAF50"
+                stroke="#F59E0B"
                 strokeWidth={2}
                 fill="url(#grad-temp)"
               />
@@ -127,7 +127,7 @@ export function WaterQualityChart() {
                 type="monotone"
                 dataKey="DO"
                 name={t("dashboard.chart.legend.do")}
-                stroke="#2E7D32"
+                stroke="#1565C0"
                 strokeWidth={2}
                 fill="url(#grad-do)"
               />

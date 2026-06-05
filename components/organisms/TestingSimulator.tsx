@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import axios from "axios";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
@@ -32,13 +32,18 @@ export function TestingSimulator() {
   const [intervalSec, setIntervalSec] = useState<number>(5);
   const [refreshSec, setRefreshSec] = useState<number>(15);
 
-  useEffect(() => {
+  // Render-time sync of server settings into editable local state — React's
+  // documented pattern for "adjust state when a prop changes" without
+  // bouncing through useEffect.
+  const [prevData, setPrevData] = useState<typeof data>(undefined);
+  if (data !== prevData) {
+    setPrevData(data);
     if (data) {
       setMode(data.dataSource);
       setIntervalSec(data.simulatorIntervalSec);
       setRefreshSec(data.chartRefreshSec);
     }
-  }, [data]);
+  }
 
   const mutation = useMutation({
     mutationFn: async (patch: Partial<AppSettingsView>) => {

@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import axios from "axios";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -15,10 +16,29 @@ import { api } from "@/lib/axios";
 import { useAuthStore } from "@/store/useAuthStore";
 import type { LoginResponse } from "@/types/api";
 
+function isSafeNext(value: string | null): value is string {
+  return (
+    typeof value === "string" &&
+    value.startsWith("/") &&
+    !value.startsWith("//") &&
+    !value.startsWith("/login")
+  );
+}
+
 export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="h-40" aria-hidden />}>
+      <LoginForm />
+    </Suspense>
+  );
+}
+
+function LoginForm() {
   const router = useRouter();
-  const setSession = useAuthStore((s) => s.setSession);
+  const searchParams = useSearchParams();
+  const setUser = useAuthStore((s) => s.setUser);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [remember, setRemember] = useState(false);
   const { t } = useT();
 
   const LoginSchema = useMemo(
@@ -44,12 +64,30 @@ export default function LoginPage() {
   const onSubmit = async (values: LoginValues) => {
     setIsSubmitting(true);
     try {
-      const { data } = await api.post<LoginResponse>("/api/auth/login", values);
-      setSession(data);
+      const { data } = await api.post<LoginResponse>("/api/auth/login", {
+        ...values,
+        remember,
+      });
+      setUser(data.user);
       toast.success(t("login.welcome", { name: data.user.name }));
-      router.push("/dashboard");
-    } catch {
-      toast.error(t("login.failed"));
+      const next = searchParams.get("next");
+      router.push(isSafeNext(next) ? next : "/dashboard");
+    } catch (err) {
+      if (axios.isAxiosError(err) && err.response?.status === 429) {
+        const body = err.response.data as {
+          retryAfterSec?: number;
+          error?: string;
+        };
+        const seconds = body.retryAfterSec ?? 60;
+        const key =
+          body.error === "RATE_LIMITED" &&
+          /locked/i.test((body as { message?: string }).message ?? "")
+            ? "login.lockedOut"
+            : "login.rateLimited";
+        toast.error(t(key, { seconds }));
+      } else {
+        toast.error(t("login.failed"));
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -83,6 +121,16 @@ export default function LoginPage() {
         )}
       </div>
 
+      <label className="flex items-center gap-2 text-sm text-gray-700">
+        <input
+          type="checkbox"
+          checked={remember}
+          onChange={(e) => setRemember(e.target.checked)}
+          className="h-4 w-4 cursor-pointer accent-[#2E7D32]"
+        />
+        {t("login.rememberMe")}
+      </label>
+
       <Button type="submit" className="w-full" disabled={isSubmitting}>
         {isSubmitting ? t("login.submitting") : t("login.submit")}
       </Button>
@@ -93,9 +141,7 @@ export default function LoginPage() {
           alex@aquawatch.dev
         </code>
         {" / "}
-        <code className="rounded bg-muted px-1.5 py-0.5">
-          demo1234
-        </code>
+        <code className="rounded bg-muted px-1.5 py-0.5">demo1234</code>
       </p>
     </form>
   );

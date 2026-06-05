@@ -26,10 +26,22 @@ export async function GET(req: NextRequest) {
     take: limit,
   });
 
+  // Hydrate device names so the client can show "Temp Sensor - Tank A"
+  // instead of the raw slug "dev-002".
+  const uniqueDeviceIds = Array.from(new Set(rows.map((a) => a.deviceId)));
+  const devices = uniqueDeviceIds.length
+    ? await prisma.device.findMany({
+        where: { id: { in: uniqueDeviceIds } },
+        select: { id: true, name: true, deviceType: true },
+      })
+    : [];
+  const nameById = new Map(devices.map((d) => [d.id, d.name]));
+
   return NextResponse.json({
     anomalies: rows.map((a) => ({
       id: a.id,
       deviceId: a.deviceId,
+      deviceName: nameById.get(a.deviceId) ?? a.deviceId,
       value: a.value,
       unit: a.unit,
       safeMin: a.safeMin,

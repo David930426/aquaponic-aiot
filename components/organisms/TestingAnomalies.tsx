@@ -23,6 +23,7 @@ import { api } from "@/lib/axios";
 interface AnomalyRow {
   id: string;
   deviceId: string;
+  deviceName: string;
   value: number;
   unit: string | null;
   safeMin: number | null;
@@ -32,8 +33,24 @@ interface AnomalyRow {
   recordedAt: string;
 }
 
+function formatReading(value: number, unit: string | null): string {
+  // Strip trailing zeros so 22.00°C → 22°C, but keep 22.5°C as-is.
+  const trimmed = Number(value.toFixed(2)).toString();
+  return `${trimmed}${unit ?? ""}`;
+}
+
+function formatRange(
+  min: number | null,
+  max: number | null,
+  unit: string | null,
+): string {
+  if (min == null || max == null) return "—";
+  const u = unit ?? "";
+  return `${min}${u}–${max}${u}`;
+}
+
 export function TestingAnomalies() {
-  const { t } = useT();
+  const { t, dateLocale } = useT();
   const refreshMs = useChartRefreshMs();
   const seenIds = useRef<Set<string>>(new Set());
   const initialized = useRef(false);
@@ -63,18 +80,16 @@ export function TestingAnomalies() {
     for (const a of data) {
       if (seenIds.current.has(a.id)) continue;
       seenIds.current.add(a.id);
-      const range =
-        a.safeMin != null && a.safeMax != null
-          ? `${a.safeMin}–${a.safeMax}${a.unit ?? ""}`
-          : "";
-      const msg = `${a.value}${a.unit ?? ""} ${range ? `(safe ${range})` : ""}`;
-      if (a.severity === "critical") {
-        toast.error(msg);
-      } else {
-        toast.warning(msg);
-      }
+      const reading = formatReading(a.value, a.unit);
+      const range = formatRange(a.safeMin, a.safeMax, a.unit);
+      const description =
+        range === "—"
+          ? t("testing.anomaly.toastBodyNoRange", { reading })
+          : t("testing.anomaly.toastBody", { reading, range });
+      const notify = a.severity === "critical" ? toast.error : toast.warning;
+      notify(a.deviceName, { description });
     }
-  }, [data]);
+  }, [data, t]);
 
   return (
     <Card>
@@ -104,15 +119,10 @@ export function TestingAnomalies() {
             <TableBody>
               {data.map((a) => (
                 <TableRow key={a.id}>
-                  <TableCell className="font-medium">{a.deviceId}</TableCell>
-                  <TableCell>
-                    {a.value}
-                    {a.unit ?? ""}
-                  </TableCell>
+                  <TableCell className="font-medium">{a.deviceName}</TableCell>
+                  <TableCell>{formatReading(a.value, a.unit)}</TableCell>
                   <TableCell className="text-xs text-muted-foreground">
-                    {a.safeMin != null && a.safeMax != null
-                      ? `${a.safeMin}–${a.safeMax}${a.unit ?? ""}`
-                      : "—"}
+                    {formatRange(a.safeMin, a.safeMax, a.unit)}
                   </TableCell>
                   <TableCell>
                     <Badge
@@ -120,11 +130,17 @@ export function TestingAnomalies() {
                         a.severity === "critical" ? "destructive" : "secondary"
                       }
                     >
-                      {a.severity}
+                      {t(
+                        a.severity === "critical"
+                          ? "alerts.severity.critical"
+                          : "alerts.severity.warning",
+                      )}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right text-xs text-muted-foreground">
-                    {format(new Date(a.recordedAt), "HH:mm:ss")}
+                    {format(new Date(a.recordedAt), "HH:mm:ss", {
+                      locale: dateLocale,
+                    })}
                   </TableCell>
                 </TableRow>
               ))}

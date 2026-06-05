@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma";
 
@@ -73,7 +73,7 @@ async function kpiFor(
   };
 }
 
-export async function GET(_req: NextRequest) {
+export async function GET() {
   const [ph, temp, doKpi, level] = await Promise.all([
     kpiFor("ph", "dev-003", 0.05),
     kpiFor("temp", "dev-002", 0.3),

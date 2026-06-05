@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import axios from "axios";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -53,9 +53,13 @@ export default function ThresholdsPage() {
   const mutation = useUpdateThresholds();
 
   const [local, setLocal] = useState<ThresholdSettings | null>(null);
-  useEffect(() => {
+  // Sync server data into editable local state via render-time comparison
+  // (see comment in data-source/page.tsx for the rationale).
+  const [prevData, setPrevData] = useState<typeof data>(undefined);
+  if (data !== prevData) {
+    setPrevData(data);
     if (data) setLocal(data);
-  }, [data]);
+  }
 
   if (isLoading || !local) {
     return (

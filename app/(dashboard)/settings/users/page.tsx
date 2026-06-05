@@ -12,7 +12,7 @@ import {
   Trash2,
   UserPlus,
 } from "lucide-react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
@@ -255,14 +255,16 @@ function CreateUserDialog({
     handleSubmit,
     reset,
     setValue,
-    watch,
+    control,
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: { name: "", email: "", password: "", role: "operator" },
   });
 
-  const role = watch("role");
+  // useWatch is the React-Compiler-safe alternative to watch() — it
+  // returns a value (subscribed via context) rather than a function.
+  const role = useWatch({ control, name: "role" });
 
   const mutation = useMutation({
     mutationFn: (values: FormValues) =>
@@ -417,14 +419,14 @@ function EditUserDialog({
     handleSubmit,
     reset,
     setValue,
-    watch,
+    control,
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: { name: "", email: "", password: "", role: "operator" },
   });
 
-  const role = watch("role");
+  const role = useWatch({ control, name: "role" });
 
   useEffect(() => {
     if (user) {

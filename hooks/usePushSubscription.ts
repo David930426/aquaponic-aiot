@@ -28,41 +28,66 @@ function urlBase64ToUint8Array(base64: string): Uint8Array {
   return out;
 }
 
+// Synchronous best-guess at the current push status from browser APIs alone.
+// "subscribed" requires an async check against PushManager, so we settle for
+// "default" initially and let the mount effect upgrade it.
+function getInitialStatus(): Status {
+  if (typeof window === "undefined") return "default";
+  if (
+    !("serviceWorker" in navigator) ||
+    !("PushManager" in window) ||
+    !("Notification" in window)
+  ) {
+    return "unsupported";
+  }
+  if (Notification.permission === "denied") return "blocked";
+  return "default";
+}
+
 export function usePushSubscription(): UsePushSubscriptionResult {
-  const [status, setStatus] = useState<Status>("default");
+  // Lazy initializer runs once during the first render — no effect needed
+  // for the synchronous portion of the status check.
+  const [status, setStatus] = useState<Status>(getInitialStatus);
   const [isWorking, setIsWorking] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const refresh = useCallback(async () => {
-    if (typeof window === "undefined") return;
-    if (
-      !("serviceWorker" in navigator) ||
-      !("PushManager" in window) ||
-      !("Notification" in window)
-    ) {
-      setStatus("unsupported");
-      return;
-    }
-    if (Notification.permission === "denied") {
-      setStatus("blocked");
-      return;
-    }
-    try {
-      const reg = await navigator.serviceWorker.getRegistration();
-      const sub = (await reg?.pushManager.getSubscription()) ?? null;
-      if (sub && Notification.permission === "granted") {
-        setStatus("subscribed");
-      } else {
-        setStatus("default");
-      }
-    } catch {
-      setStatus("default");
-    }
-  }, []);
-
+  // Subscribe to the actual PushManager state. Only relevant when the
+  // browser supports it AND the user hasn't blocked notifications. Inside
+  // the listener we can call setStatus freely — the lint rule only objects
+  // to *synchronous* setState inside the effect body itself.
   useEffect(() => {
-    void refresh();
-  }, [refresh]);
+    if (status === "unsupported" || status === "blocked") return;
+    if (typeof window === "undefined") return;
+
+    let cancelled = false;
+    const check = async () => {
+      try {
+        const reg = await navigator.serviceWorker.getRegistration();
+        const sub = (await reg?.pushManager.getSubscription()) ?? null;
+        if (cancelled) return;
+        if (sub && Notification.permission === "granted") {
+          setStatus("subscribed");
+        } else {
+          setStatus("default");
+        }
+      } catch {
+        if (!cancelled) setStatus("default");
+      }
+    };
+    void check();
+
+    // If the page comes back into focus, re-verify in case the user changed
+    // their browser permission in another tab.
+    const onVisible = () => {
+      if (document.visibilityState === "visible") void check();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+
+    return () => {
+      cancelled = true;
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [status]);
 
   const subscribe = useCallback(async () => {
     setError(null);

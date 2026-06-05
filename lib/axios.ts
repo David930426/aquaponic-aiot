@@ -7,17 +7,12 @@ const baseURL =
     ? process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000"
     : "";
 
+// withCredentials ensures the browser sends our httpOnly session cookie.
+// There's no Authorization header in client requests anymore — JS can't read
+// the cookie, which protects the token from XSS exfiltration.
 export const api = axios.create({
   baseURL,
   withCredentials: true,
-});
-
-api.interceptors.request.use((config) => {
-  const token = useAuthStore.getState().accessToken;
-  if (token) {
-    config.headers.set?.("Authorization", `Bearer ${token}`);
-  }
-  return config;
 });
 
 api.interceptors.response.use(

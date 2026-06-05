@@ -11,19 +11,15 @@ import type { AuthUser } from "@/types/api";
 export function AuthGuard({ children }: { children: ReactNode }) {
   const router = useRouter();
   const hydrated = useAuthStore((s) => s.hydrated);
-  const token = useAuthStore((s) => s.accessToken);
+  const cachedUser = useAuthStore((s) => s.user);
   const setUser = useAuthStore((s) => s.setUser);
   const logout = useAuthStore((s) => s.logout);
 
-  // Once persistence has rehydrated and there's still no token → straight to login.
-  useEffect(() => {
-    if (hydrated && !token) router.replace("/login");
-  }, [hydrated, token, router]);
-
-  // Validate token against the server (handles revoked/expired sessions).
-  const { isError, isLoading } = useQuery({
-    enabled: hydrated && !!token,
-    queryKey: ["me", token],
+  // Cookie isn't readable from JS, so we ask the server who we are.
+  // Cached `user` only seeds initial render — the source of truth is /me.
+  const { isError, isLoading, isFetched } = useQuery({
+    enabled: hydrated,
+    queryKey: ["me"],
     queryFn: async () => {
       const { data } = await api.get<{ user: AuthUser }>("/api/auth/me");
       setUser(data.user);
@@ -40,7 +36,8 @@ export function AuthGuard({ children }: { children: ReactNode }) {
     }
   }, [isError, logout, router]);
 
-  if (!hydrated || !token || isLoading) {
+  const stillCheckingFirstTime = isLoading && !isFetched && !cachedUser;
+  if (!hydrated || stillCheckingFirstTime) {
     return (
       <div className="flex h-screen items-center justify-center bg-[#F4F6F8]">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#E4E7EC] border-t-[#2E7D32]" />

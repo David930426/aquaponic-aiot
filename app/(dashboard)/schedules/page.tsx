@@ -336,11 +336,22 @@ function ScheduleFormDialog({
     defaultValues: defaults,
   });
 
-  useEffect(() => {
-    if (!open) return;
-    reset(defaults);
+  // Re-seed local state when the dialog opens or the target schedule changes.
+  // Render-time comparison avoids the extra commit + lint warning from
+  // calling setState inside a useEffect, while reset() (RHF's own state)
+  // stays in an effect since it isn't React state.
+  const openKey = open ? (schedule?.id ?? "new") : null;
+  const [prevOpenKey, setPrevOpenKey] = useState<string | null>(null);
+  if (open && openKey !== prevOpenKey) {
+    setPrevOpenKey(openKey);
     setSpec(schedule ? parseCron(schedule.cron) : DEFAULT_SPEC);
-  }, [open, defaults, reset, schedule]);
+  } else if (!open && prevOpenKey !== null) {
+    setPrevOpenKey(null);
+  }
+
+  useEffect(() => {
+    if (open) reset(defaults);
+  }, [open, defaults, reset]);
 
   const cron = useMemo(() => buildCron(spec), [spec]);
   const humanized = useMemo(() => humanizeCron(cron, locale), [cron, locale]);
@@ -512,7 +523,6 @@ function FrequencyPicker({
 
   const setKind = (kind: ScheduleKind) => onChange({ ...spec, kind });
   const setMinute = (minute: number) => onChange({ ...spec, minute });
-  const setHour = (hour: number) => onChange({ ...spec, hour });
   const setWeekdays = (weekdays: number[]) =>
     onChange({ ...spec, weekdays });
   const setDayOfMonth = (dayOfMonth: number) =>
@@ -526,8 +536,14 @@ function FrequencyPicker({
   ).padStart(2, "0")}`;
   const onTimeChange = (value: string) => {
     const [h, m] = value.split(":").map(Number);
-    if (!Number.isNaN(h)) setHour(h);
-    if (!Number.isNaN(m)) setMinute(m);
+    // Commit hour AND minute in a single update — separate setHour/setMinute
+    // calls would both close over the same stale `spec`, so the second one
+    // would clobber the first.
+    onChange({
+      ...spec,
+      hour: Number.isNaN(h) ? spec.hour : Math.max(0, Math.min(23, h)),
+      minute: Number.isNaN(m) ? spec.minute : Math.max(0, Math.min(59, m)),
+    });
   };
 
   const toggleWeekday = (d: number) => {

@@ -1,7 +1,7 @@
 // AquaWatch service worker. Handles incoming Web Push events and
 // re-focuses or opens the dashboard when the user taps the notification.
 
-self.addEventListener("install", (event) => {
+self.addEventListener("install", () => {
   // Take control of clients as soon as the new SW is installed
   self.skipWaiting();
 });
@@ -14,7 +14,7 @@ self.addEventListener("push", (event) => {
   let payload = { title: "AquaWatch", body: "" };
   try {
     payload = event.data ? event.data.json() : payload;
-  } catch (e) {
+  } catch {
     payload.body = event.data ? event.data.text() : "";
   }
 
@@ -45,7 +45,7 @@ self.addEventListener("notificationclick", (event) => {
             if ("navigate" in c) c.navigate(targetUrl);
             return;
           }
-        } catch (e) {
+        } catch {
           /* ignore */
         }
       }

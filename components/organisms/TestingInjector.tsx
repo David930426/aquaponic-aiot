@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import axios from "axios";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
@@ -49,12 +49,12 @@ export function TestingInjector() {
     [data],
   );
 
-  const [deviceId, setDeviceId] = useState<string>("");
+  // `explicitDeviceId` tracks user selection; deviceId falls back to the
+  // first sensor when nothing's been picked. Computing this during render
+  // instead of using a sync-in-effect avoids the extra commit + lint warning.
+  const [explicitDeviceId, setExplicitDeviceId] = useState<string>("");
+  const deviceId = explicitDeviceId || sensors[0]?.id || "";
   const [value, setValue] = useState<string>("");
-
-  useEffect(() => {
-    if (!deviceId && sensors[0]) setDeviceId(sensors[0].id);
-  }, [deviceId, sensors]);
 
   const selected = sensors.find((d) => d.id === deviceId);
   const unit = selected?.reading?.unit ?? "";
@@ -111,7 +111,7 @@ export function TestingInjector() {
               <Label htmlFor="injector-device">
                 {t("testing.injector.device")}
               </Label>
-              <Select value={deviceId} onValueChange={setDeviceId}>
+              <Select value={deviceId} onValueChange={setExplicitDeviceId}>
                 <SelectTrigger id="injector-device">
                   <SelectValue />
                 </SelectTrigger>

@@ -1,6 +1,7 @@
 "use client";
 
 import { TestingAnomalies } from "@/components/organisms/TestingAnomalies";
+import { TestingFaultInjection } from "@/components/organisms/TestingFaultInjection";
 import { TestingInjector } from "@/components/organisms/TestingInjector";
 import { TestingLiveChart } from "@/components/organisms/TestingLiveChart";
 import { TestingSimulator } from "@/components/organisms/TestingSimulator";
@@ -28,7 +29,14 @@ export default function TestingPage() {
         </div>
       </div>
 
-      <TestingLiveChart />
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <div className="lg:col-span-1">
+          <TestingFaultInjection />
+        </div>
+        <div className="lg:col-span-2">
+          <TestingLiveChart />
+        </div>
+      </div>
 
       <TestingAnomalies />
     </div>

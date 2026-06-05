@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import axios from "axios";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
@@ -29,9 +29,15 @@ export default function DataSourcePage() {
   const queryClient = useQueryClient();
 
   const [local, setLocal] = useState<AppSettingsView | null>(null);
-  useEffect(() => {
+  // Sync server data into editable local state via render-time comparison —
+  // React's documented escape hatch for "adjust state on prop change" without
+  // bouncing through useEffect (which triggers an extra commit + the
+  // react-hooks/set-state-in-effect lint).
+  const [prevData, setPrevData] = useState<typeof data>(undefined);
+  if (data !== prevData) {
+    setPrevData(data);
     if (data) setLocal(data);
-  }, [data]);
+  }
 
   const mutation = useMutation({
     mutationFn: async (patch: Partial<AppSettingsView>) => {

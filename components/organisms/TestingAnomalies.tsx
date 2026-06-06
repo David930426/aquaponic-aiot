@@ -104,6 +104,7 @@ export function TestingAnomalies() {
             {t("testing.table.empty")}
           </p>
         ) : (
+          <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
@@ -146,6 +147,7 @@ export function TestingAnomalies() {
               ))}
             </TableBody>
           </Table>
+          </div>
         )}
       </CardContent>
     </Card>

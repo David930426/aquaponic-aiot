@@ -85,11 +85,14 @@ export default function UsersPage() {
 
   return (
     <div>
-      <div className="mb-4 flex items-center justify-between">
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-muted-foreground">
           {t("settings.users.subtitle")}
         </p>
-        <Button onClick={() => setCreateOpen(true)}>
+        <Button
+          onClick={() => setCreateOpen(true)}
+          className="w-full sm:w-auto"
+        >
           <UserPlus className="mr-1.5 h-4 w-4" />
           {t("settings.users.new")}
         </Button>
@@ -108,6 +111,7 @@ export default function UsersPage() {
               {t("settings.users.empty")}
             </p>
           ) : (
+            <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -191,6 +195,7 @@ export default function UsersPage() {
                 })}
               </TableBody>
             </Table>
+            </div>
           )}
         </CardContent>
       </Card>

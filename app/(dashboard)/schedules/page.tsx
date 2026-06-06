@@ -110,16 +110,19 @@ export default function SchedulesPage() {
 
   return (
     <div className="mx-auto max-w-350">
-      <div className="mb-6 flex items-end justify-between">
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-[20px] font-semibold text-foreground">
+          <h1 className="text-lg font-semibold text-foreground sm:text-[20px]">
             {t("schedules.page.title")}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {t("schedules.page.subtitle")}
           </p>
         </div>
-        <Button onClick={() => setCreateOpen(true)}>
+        <Button
+          onClick={() => setCreateOpen(true)}
+          className="w-full sm:w-auto"
+        >
           <CalendarPlus className="mr-1.5 h-4 w-4" />
           {t("schedules.action.new")}
         </Button>
@@ -136,6 +139,7 @@ export default function SchedulesPage() {
           ) : !data?.length ? (
             <SchedulesEmpty onCreate={() => setCreateOpen(true)} />
           ) : (
+            <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -233,6 +237,7 @@ export default function SchedulesPage() {
                 ))}
               </TableBody>
             </Table>
+            </div>
           )}
         </CardContent>
       </Card>

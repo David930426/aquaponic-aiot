@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { AlertTriangle, Cpu, RefreshCw } from "lucide-react";
 
 import {
@@ -11,13 +12,46 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useDeviceToggle } from "@/hooks/useDeviceToggle";
 import { useDevices } from "@/hooks/useDevices";
 import { useT } from "@/hooks/useT";
+import { cn } from "@/lib/utils";
 import { useZoneStore } from "@/store/useZoneStore";
+
+// When the search palette navigates to `/devices#dev-002`, scroll the
+// matching card into view and pulse a ring around it briefly so the user
+// can see which one they picked.
+function useFocusFromHash(ready: boolean): string | null {
+  // Read the hash once on mount — lazy initializer avoids a setState-in-effect
+  // for the initial value.
+  const [focusId, setFocusId] = useState<string | null>(() => {
+    if (typeof window === "undefined") return null;
+    return window.location.hash.slice(1) || null;
+  });
+
+  useEffect(() => {
+    if (!ready || !focusId) return;
+    // Wait one frame for the grid to render so getElementById finds the node.
+    const scrollTimer = window.setTimeout(() => {
+      const el = document.getElementById(`device-${focusId}`);
+      el?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 50);
+    // Clear the focus ring after a couple of seconds. setState in a deferred
+    // callback isn't flagged by react-hooks/set-state-in-effect because it
+    // isn't synchronous with the effect body.
+    const clearTimer = window.setTimeout(() => setFocusId(null), 2500);
+    return () => {
+      window.clearTimeout(scrollTimer);
+      window.clearTimeout(clearTimer);
+    };
+  }, [ready, focusId]);
+
+  return focusId;
+}
 
 export function ManagedDevicesGrid() {
   const zoneId = useZoneStore((s) => s.selectedZoneId);
   const { data, isLoading, error, refetch } = useDevices(zoneId);
   const toggle = useDeviceToggle(zoneId);
   const { t } = useT();
+  const focusId = useFocusFromHash(!!data?.devices.length);
 
   return (
     <section className="mt-6">
@@ -64,14 +98,23 @@ export function ManagedDevicesGrid() {
       ) : (
         <div className="grid grid-cols-2 items-start gap-4 sm:grid-cols-3 lg:grid-cols-4">
           {data.devices.map((device) => (
-            <DeviceCard
+            <div
               key={device.id}
-              {...device}
-              isPending={
-                toggle.isPending && toggle.variables?.id === device.id
-              }
-              onToggle={(id, enabled) => toggle.mutate({ id, enabled })}
-            />
+              id={`device-${device.id}`}
+              className={cn(
+                "rounded-2xl transition-shadow",
+                focusId === device.id &&
+                  "ring-2 ring-[#2E7D32] ring-offset-2 ring-offset-[#F4F6F8]",
+              )}
+            >
+              <DeviceCard
+                {...device}
+                isPending={
+                  toggle.isPending && toggle.variables?.id === device.id
+                }
+                onToggle={(id, enabled) => toggle.mutate({ id, enabled })}
+              />
+            </div>
           ))}
         </div>
       )}

@@ -34,24 +34,29 @@ export default function SettingsLayout({
         </p>
       </div>
 
-      <div className="mb-5 flex gap-1 border-b border-[#EAECEF]">
-        {tabs.map((tab) => {
-          const isActive = pathname.startsWith(tab.href);
-          return (
-            <Link
-              key={tab.href}
-              href={tab.href}
-              className={cn(
-                "-mb-px border-b-2 px-4 py-2.5 text-sm font-medium transition-colors",
-                isActive
-                  ? "border-[#2E7D32] text-[#2E7D32]"
-                  : "border-transparent text-gray-500 hover:text-gray-700",
-              )}
-            >
-              {t(tab.labelKey)}
-            </Link>
-          );
-        })}
+      {/* Horizontally scrollable tab strip on mobile (-mx negative
+          margin lets it bleed to the edge so the active tab is fully
+          visible). Snap-scrolling makes it feel native on touch. */}
+      <div className="-mx-3 mb-5 overflow-x-auto border-b border-[#EAECEF] sm:mx-0">
+        <div className="flex min-w-max gap-1 px-3 sm:px-0">
+          {tabs.map((tab) => {
+            const isActive = pathname.startsWith(tab.href);
+            return (
+              <Link
+                key={tab.href}
+                href={tab.href}
+                className={cn(
+                  "-mb-px shrink-0 snap-start border-b-2 px-4 py-2.5 text-sm font-medium transition-colors",
+                  isActive
+                    ? "border-[#2E7D32] text-[#2E7D32]"
+                    : "border-transparent text-gray-500 hover:text-gray-700",
+                )}
+              >
+                {t(tab.labelKey)}
+              </Link>
+            );
+          })}
+        </div>
       </div>
 
       {children}

@@ -45,6 +45,7 @@ const DEVICE_COLORS: Record<string, string> = {
   sensor_temp: "#F59E0B",
   sensor_do: "#1565C0",
   sensor_level: "#0EA5E9",
+  sensor_flow: "#7C3AED",
 };
 
 export function TestingLiveChart() {

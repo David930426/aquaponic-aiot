@@ -53,6 +53,14 @@ model Device {
   readingUnit  String?
   safeMin      Float?
   safeMax      Float?
+  // Per-device live data source. When the data engine is in "live" mode it
+  // GETs apiUrl for this device; if apiUrl is empty or the fetch fails it
+  // falls back to simulating from the sim* params below.
+  apiUrl       String?
+  apiToken     String?
+  simBaseline  Float?
+  simAmplitude Float?
+  simNoise     Float?
   updatedAt    DateTime @updatedAt
   createdAt    DateTime @default(now())
 

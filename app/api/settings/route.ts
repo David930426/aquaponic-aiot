@@ -7,21 +7,16 @@ import { getSettings, updateSettings } from "@/lib/settings";
 export const dynamic = "force-dynamic";
 
 const PatchSchema = z.object({
-  dataSource: z.enum(["simulator", "external", "passive"]).optional(),
-  externalApiUrl: z.string().optional(),
-  externalApiToken: z.string().optional(),
-  simulatorIntervalSec: z.number().int().min(1).max(3600).optional(),
+  dataSource: z.enum(["passive", "live"]).optional(),
+  pollIntervalSec: z.number().int().min(5).max(3600).optional(),
   chartRefreshSec: z.number().int().min(5).max(3600).optional(),
   sensorRetentionDays: z.number().int().min(1).max(365).optional(),
 });
 
-// Public GET — clients need chartRefreshSec etc. Sensitive bits stripped below.
+// Public GET — clients need chartRefreshSec etc.
 export async function GET() {
   const s = await getSettings();
-  // Hide externalApiToken on read; admins can verify via PATCH if needed.
-  return NextResponse.json({
-    settings: { ...s, externalApiToken: s.externalApiToken ? "********" : "" },
-  });
+  return NextResponse.json({ settings: s });
 }
 
 export async function PATCH(req: NextRequest) {
@@ -44,10 +39,5 @@ export async function PATCH(req: NextRequest) {
     );
   }
   const next = await updateSettings(parsed.data);
-  return NextResponse.json({
-    settings: {
-      ...next,
-      externalApiToken: next.externalApiToken ? "********" : "",
-    },
-  });
+  return NextResponse.json({ settings: next });
 }

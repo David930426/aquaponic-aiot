@@ -19,7 +19,13 @@ export async function GET(req: NextRequest) {
     where: {
       zoneId,
       deviceType: {
-        in: ["sensor_temp", "sensor_ph", "sensor_level", "sensor_do"],
+        in: [
+          "sensor_temp",
+          "sensor_ph",
+          "sensor_level",
+          "sensor_do",
+          "sensor_flow",
+        ],
       },
     },
     orderBy: { createdAt: "asc" },

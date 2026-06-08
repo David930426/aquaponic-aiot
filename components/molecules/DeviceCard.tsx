@@ -1,7 +1,16 @@
 "use client";
 
+import { MoreVertical, Pencil, Trash2 } from "lucide-react";
+
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { useReadingLabel, useT } from "@/hooks/useT";
@@ -24,6 +33,9 @@ export interface DeviceCardProps {
   isLoading?: boolean;
   isPending?: boolean;
   onToggle: (id: string, enabled: boolean) => void;
+  /** When provided, an actions (⋮) menu with Edit/Delete is shown. */
+  onEdit?: (id: string) => void;
+  onDelete?: (id: string) => void;
 }
 
 export function DeviceCard({
@@ -36,6 +48,8 @@ export function DeviceCard({
   isLoading,
   isPending,
   onToggle,
+  onEdit,
+  onDelete,
 }: DeviceCardProps) {
   const { t } = useT();
   const readingLabel = useReadingLabel();
@@ -43,16 +57,51 @@ export function DeviceCard({
   if (isLoading) return <DeviceCardSkeleton />;
 
   const { icon: Icon, iconBg, iconColor } = deviceIconMap[deviceType];
+  const showMenu = !!onEdit || !!onDelete;
 
   return (
     <Card className="flex h-full flex-col transition-shadow duration-200 hover:shadow-(--shadow-panel)">
       <CardContent className="flex h-full flex-col p-5">
-        <div
-          className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl"
-          style={{ backgroundColor: iconBg }}
-          aria-hidden
-        >
-          <Icon className="h-5 w-5" style={{ color: iconColor }} />
+        <div className="mb-3 flex items-start justify-between">
+          <div
+            className="flex h-10 w-10 items-center justify-center rounded-xl"
+            style={{ backgroundColor: iconBg }}
+            aria-hidden
+          >
+            <Icon className="h-5 w-5" style={{ color: iconColor }} />
+          </div>
+
+          {showMenu && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 text-muted-foreground"
+                  aria-label={t("devices.actions")}
+                >
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {onEdit && (
+                  <DropdownMenuItem onClick={() => onEdit(id)}>
+                    <Pencil className="mr-2 h-4 w-4" />
+                    {t("devices.edit")}
+                  </DropdownMenuItem>
+                )}
+                {onDelete && (
+                  <DropdownMenuItem
+                    onClick={() => onDelete(id)}
+                    className="text-[#B91C1C] focus:text-[#B91C1C]"
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    {t("devices.delete")}
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
 
         <p className="mb-1.5 text-[15px] font-semibold leading-tight text-foreground">

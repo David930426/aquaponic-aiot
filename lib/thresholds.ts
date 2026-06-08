@@ -12,7 +12,8 @@ export type SensorMetric =
   | "sensor_temp"
   | "sensor_ph"
   | "sensor_level"
-  | "sensor_do";
+  | "sensor_do"
+  | "sensor_flow";
 
 export interface MetricThreshold {
   min: number;
@@ -34,6 +35,7 @@ export const SENSOR_METRICS: SensorMetric[] = [
   "sensor_ph",
   "sensor_level",
   "sensor_do",
+  "sensor_flow",
 ];
 
 export const DEFAULT_THRESHOLDS: ThresholdSettings = {
@@ -42,6 +44,7 @@ export const DEFAULT_THRESHOLDS: ThresholdSettings = {
     sensor_ph: { min: 6.5, max: 7.5 },
     sensor_level: { min: 60, max: 95 },
     sensor_do: { min: 5, max: 12 },
+    sensor_flow: { min: 10, max: 60 },
   },
   criticalDeltaPercent: 10,
 };

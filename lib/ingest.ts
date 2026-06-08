@@ -155,6 +155,7 @@ function formatReading(value: number, unit: string): string {
   if (unit === "°C") return `${value.toFixed(1)}°C`;
   if (unit === "%") return `${Math.round(value)}%`;
   if (unit === "mg/L") return `${value.toFixed(1)} mg/L`;
+  if (unit === "L/min") return `${value.toFixed(1)} L/min`;
   if (unit === "") {
     // pH-style — show with one decimal
     return value.toFixed(1);

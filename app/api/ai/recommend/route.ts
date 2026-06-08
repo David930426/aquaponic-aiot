@@ -33,6 +33,7 @@ const METRIC_LABEL: Record<string, { en: string; "zh-TW": string }> = {
   sensor_ph: { en: "pH", "zh-TW": "pH 值" },
   sensor_level: { en: "water level", "zh-TW": "水位" },
   sensor_do: { en: "dissolved oxygen", "zh-TW": "溶氧量" },
+  sensor_flow: { en: "water flow rate", "zh-TW": "水流量" },
 };
 
 export async function POST(req: NextRequest) {
@@ -278,6 +279,27 @@ function remediationSteps(ctx: AnalysisContext): string[] {
           "檢查水溫：水溫越高溶氧越低，高溫 + 低 DO 是高風險組合。",
           "若魚群明顯緊迫，接下來兩餐減量餵食。",
           "每 5 分鐘重測 DO，直到趨勢反轉。",
+        ];
+  }
+  if (ctx.deviceType === "sensor_flow") {
+    return isEn
+      ? [
+          dir === "below"
+            ? "Check the circulation pump is running and primed; inspect the impeller for air-lock or debris."
+            : "Check for a stuck-open valve or a sensor over-reading; verify the line isn't bypassing.",
+          "Inspect filters and pipework for clogs or kinks that throttle flow.",
+          "Confirm the pump isn't cavitating (low inlet level or air leak on the suction side).",
+          "Cross-check against the water-level reading — a falling level often precedes flow loss.",
+          "If flow stays out of range, switch the pump to manual and notify operations.",
+        ]
+      : [
+          dir === "below"
+            ? "確認循環泵運轉且已灌注，檢查葉輪是否卡住空氣或雜物。"
+            : "檢查是否有閥門卡在開啟、或感測器讀數偏高；確認管路未被旁通。",
+          "檢查濾材與管線是否阻塞或折彎而限制流量。",
+          "確認水泵未發生空蝕（進水位過低或吸入端漏氣）。",
+          "與水位讀數交叉比對 — 水位下降常先於流量損失。",
+          "若流量持續異常，將水泵切換至手動並通知運維。",
         ];
   }
   // Generic

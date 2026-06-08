@@ -29,7 +29,7 @@ export function TestingSimulator() {
   const queryClient = useQueryClient();
 
   const [mode, setMode] = useState<DataSource>("passive");
-  const [intervalSec, setIntervalSec] = useState<number>(5);
+  const [intervalSec, setIntervalSec] = useState<number>(30);
   const [refreshSec, setRefreshSec] = useState<number>(15);
 
   // Render-time sync of server settings into editable local state — React's
@@ -40,7 +40,7 @@ export function TestingSimulator() {
     setPrevData(data);
     if (data) {
       setMode(data.dataSource);
-      setIntervalSec(data.simulatorIntervalSec);
+      setIntervalSec(data.pollIntervalSec);
       setRefreshSec(data.chartRefreshSec);
     }
   }
@@ -98,11 +98,8 @@ export function TestingSimulator() {
               <SelectItem value="passive">
                 {t("settings.dataSource.mode.passive")}
               </SelectItem>
-              <SelectItem value="simulator">
-                {t("settings.dataSource.mode.simulator")}
-              </SelectItem>
-              <SelectItem value="external">
-                {t("settings.dataSource.mode.external")}
+              <SelectItem value="live">
+                {t("settings.dataSource.mode.live")}
               </SelectItem>
             </SelectContent>
           </Select>
@@ -116,11 +113,11 @@ export function TestingSimulator() {
             <Input
               id="sim-interval"
               type="number"
-              min={1}
+              min={5}
               max={3600}
               value={intervalSec}
               onChange={(e) => setIntervalSec(Number(e.target.value))}
-              disabled={mode !== "simulator"}
+              disabled={mode !== "live"}
             />
           </div>
           <div className="space-y-1.5">
@@ -143,7 +140,7 @@ export function TestingSimulator() {
             onClick={() =>
               mutation.mutate({
                 dataSource: mode,
-                simulatorIntervalSec: intervalSec,
+                pollIntervalSec: intervalSec,
                 chartRefreshSec: refreshSec,
               })
             }

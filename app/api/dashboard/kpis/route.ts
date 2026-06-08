@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 type TrendKind = "stable" | "increasing" | "decreasing" | "optimal" | "normal";
 
 interface KpiCard {
-  key: "ph" | "temp" | "do" | "level";
+  key: "ph" | "temp" | "do" | "level" | "flow";
   deviceId: string;
   value: number;
   unit: string;
@@ -74,11 +74,12 @@ async function kpiFor(
 }
 
 export async function GET() {
-  const [ph, temp, doKpi, level] = await Promise.all([
+  const [ph, temp, doKpi, level, flow] = await Promise.all([
     kpiFor("ph", "dev-003", 0.05),
     kpiFor("temp", "dev-002", 0.3),
     kpiFor("do", "dev-008", 0.2, true),
     kpiFor("level", "dev-006", 1),
+    kpiFor("flow", "dev-009", 0.5),
   ]);
 
   // Water level uses "Normal" wording when within safe range
@@ -86,6 +87,6 @@ export async function GET() {
 
   return NextResponse.json({
     updatedAt: Date.now(),
-    kpis: [ph, temp, doKpi, level].filter(Boolean),
+    kpis: [ph, temp, doKpi, level, flow].filter(Boolean),
   });
 }

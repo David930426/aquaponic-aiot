@@ -133,6 +133,19 @@ async function main() {
       safeMin: 5,
       safeMax: 12,
     },
+    {
+      id: "dev-009",
+      name: "Flow Sensor - Main",
+      deviceType: "sensor_flow",
+      status: "active",
+      isEnabled: true,
+      readingLabel: "Current reading",
+      readingValue: "35.0 L/min",
+      readingRaw: 35.0,
+      readingUnit: "L/min",
+      safeMin: 10,
+      safeMax: 60,
+    },
   ];
 
   for (const d of devices) {
@@ -239,6 +252,12 @@ async function main() {
       deviceId: "dev-008",
       value: 8.2 + wave * 1.5 + (Math.random() - 0.5) * 0.3,
       unit: "mg/L",
+      recordedAt: at,
+    });
+    readings.push({
+      deviceId: "dev-009",
+      value: 35 + wave * 8 + (Math.random() - 0.5) * 4,
+      unit: "L/min",
       recordedAt: at,
     });
   }

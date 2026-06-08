@@ -21,6 +21,7 @@ const PatchSchema = z.object({
       sensor_ph: MetricSchema.optional(),
       sensor_level: MetricSchema.optional(),
       sensor_do: MetricSchema.optional(),
+      sensor_flow: MetricSchema.optional(),
     })
     .optional(),
   criticalDeltaPercent: z.number().min(0).max(100).optional(),

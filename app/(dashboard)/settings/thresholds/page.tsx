@@ -45,6 +45,12 @@ const METRICS: {
     unitKey: "settings.thresholds.unit.do",
     step: 0.1,
   },
+  {
+    key: "sensor_flow",
+    labelKey: "settings.thresholds.label.flow",
+    unitKey: "settings.thresholds.unit.flow",
+    step: 0.1,
+  },
 ];
 
 export default function ThresholdsPage() {

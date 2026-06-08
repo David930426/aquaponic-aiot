@@ -14,6 +14,7 @@ export type DeviceType =
   | "sensor_ph"
   | "sensor_level"
   | "sensor_do"
+  | "sensor_flow"
   | "feeder"
   | "lighting"
   | "aeration";
@@ -32,6 +33,30 @@ export interface Device {
   status: DeviceStatus;
   isEnabled: boolean;
   reading: DeviceReading | null;
+  // Editable config (returned for the management UI). apiToken is never sent
+  // back to the client — `hasApiToken` just signals whether one is stored.
+  apiUrl?: string | null;
+  hasApiToken?: boolean;
+  safeMin?: number | null;
+  safeMax?: number | null;
+  readingUnit?: string | null;
+  simBaseline?: number | null;
+  simAmplitude?: number | null;
+  simNoise?: number | null;
+}
+
+/** Body shared by create/edit device forms. */
+export interface DeviceInput {
+  name: string;
+  deviceType: DeviceType;
+  apiUrl?: string | null;
+  apiToken?: string | null;
+  safeMin?: number | null;
+  safeMax?: number | null;
+  readingUnit?: string | null;
+  simBaseline?: number | null;
+  simAmplitude?: number | null;
+  simNoise?: number | null;
 }
 
 export interface DevicesResponse {
@@ -77,7 +102,7 @@ export type KpiTrend =
   | "normal";
 
 export interface KpiCard {
-  key: "ph" | "temp" | "do" | "level";
+  key: "ph" | "temp" | "do" | "level" | "flow";
   deviceId: string;
   value: number;
   unit: string;

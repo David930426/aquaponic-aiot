@@ -13,7 +13,7 @@ import { Cron } from "croner";
 
 import { prisma } from "./prisma";
 import { broadcastPush } from "./push";
-import { syncSimulator } from "./simulator";
+import { syncDataEngine } from "./data-engine";
 
 interface RegisteredJob {
   cron: Cron;
@@ -130,8 +130,8 @@ async function resync() {
   // Also: deliver any snoozed notifications whose timer just elapsed.
   await releaseSnoozed();
 
-  // And reconcile the simulator with the current data-source setting.
-  await syncSimulator();
+  // And reconcile the data engine (per-device API + simulator fallback).
+  await syncDataEngine();
 }
 
 /**

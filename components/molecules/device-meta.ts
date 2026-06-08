@@ -1,4 +1,5 @@
 import {
+  Activity,
   Atom,
   Droplets,
   FlaskConical,
@@ -25,6 +26,7 @@ export const deviceIconMap: Record<DeviceType, DeviceIconMeta> = {
   sensor_ph: { icon: FlaskConical, iconBg: "#E3F2FD", iconColor: "#1565C0" },
   sensor_level: { icon: Droplets, iconBg: "#E3F2FD", iconColor: "#1565C0" },
   sensor_do: { icon: Atom, iconBg: "#E3F2FD", iconColor: "#1565C0" },
+  sensor_flow: { icon: Activity, iconBg: "#E3F2FD", iconColor: "#1565C0" },
   feeder: { icon: UtensilsCrossed, iconBg: "#FFF8E1", iconColor: "#E65100" },
   lighting: { icon: Sun, iconBg: "#FFF9C4", iconColor: "#C77700" },
 };

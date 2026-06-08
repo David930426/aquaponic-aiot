@@ -30,9 +30,7 @@ export default function DataSourcePage() {
 
   const [local, setLocal] = useState<AppSettingsView | null>(null);
   // Sync server data into editable local state via render-time comparison —
-  // React's documented escape hatch for "adjust state on prop change" without
-  // bouncing through useEffect (which triggers an extra commit + the
-  // react-hooks/set-state-in-effect lint).
+  // React's documented escape hatch for "adjust state on prop change".
   const [prevData, setPrevData] = useState<typeof data>(undefined);
   if (data !== prevData) {
     setPrevData(data);
@@ -70,19 +68,12 @@ export default function DataSourcePage() {
   }
 
   const save = () => {
-    const patch: Partial<AppSettingsView> = {
+    mutation.mutate({
       dataSource: local.dataSource,
-      externalApiUrl: local.externalApiUrl,
-      simulatorIntervalSec: local.simulatorIntervalSec,
+      pollIntervalSec: local.pollIntervalSec,
       chartRefreshSec: local.chartRefreshSec,
       sensorRetentionDays: local.sensorRetentionDays,
-    };
-    // Only send the token when the admin actually typed a new one
-    // (the GET response masks it as "********").
-    if (local.externalApiToken && local.externalApiToken !== "********") {
-      patch.externalApiToken = local.externalApiToken;
-    }
-    mutation.mutate(patch);
+    });
   };
 
   return (
@@ -108,93 +99,38 @@ export default function DataSourcePage() {
                 <SelectItem value="passive">
                   {t("settings.dataSource.mode.passive")}
                 </SelectItem>
-                <SelectItem value="simulator">
-                  {t("settings.dataSource.mode.simulator")}
-                </SelectItem>
-                <SelectItem value="external">
-                  {t("settings.dataSource.mode.external")}
+                <SelectItem value="live">
+                  {t("settings.dataSource.mode.live")}
                 </SelectItem>
               </SelectContent>
             </Select>
             <p className="text-xs text-muted-foreground">
-              {local.dataSource === "passive" &&
-                t("settings.dataSource.mode.passive.hint")}
-              {local.dataSource === "simulator" &&
-                t("settings.dataSource.mode.simulator.hint")}
-              {local.dataSource === "external" &&
-                t("settings.dataSource.mode.external.hint")}
+              {local.dataSource === "passive"
+                ? t("settings.dataSource.mode.passive.hint")
+                : t("settings.dataSource.mode.live.hint")}
             </p>
           </div>
 
-          {local.dataSource === "simulator" && (
+          {local.dataSource === "live" && (
             <div className="space-y-1.5">
-              <Label htmlFor="sim-interval">
-                {t("settings.dataSource.simulatorInterval")}
+              <Label htmlFor="poll-interval">
+                {t("settings.dataSource.pollInterval")}
               </Label>
               <Input
-                id="sim-interval"
+                id="poll-interval"
                 type="number"
-                min={1}
+                min={5}
                 max={3600}
-                value={local.simulatorIntervalSec}
+                value={local.pollIntervalSec}
                 onChange={(e) =>
-                  setLocal({
-                    ...local,
-                    simulatorIntervalSec: Number(e.target.value),
-                  })
+                  setLocal({ ...local, pollIntervalSec: Number(e.target.value) })
                 }
                 className="w-32"
               />
               <p className="text-xs text-muted-foreground">
-                {t("settings.dataSource.simulatorInterval.hint")}
+                {t("settings.dataSource.pollInterval.hint")}
               </p>
             </div>
-          )}
-
-          {local.dataSource === "external" && (
-            <>
-              <div className="space-y-1.5">
-                <Label htmlFor="ext-url">
-                  {t("settings.dataSource.externalUrl")}
-                </Label>
-                <Input
-                  id="ext-url"
-                  placeholder="https://my-iot-gateway.example.com/readings"
-                  value={local.externalApiUrl}
-                  onChange={(e) =>
-                    setLocal({ ...local, externalApiUrl: e.target.value })
-                  }
-                />
-                <p className="text-xs text-muted-foreground">
-                  {t("settings.dataSource.externalUrl.hint")}
-                </p>
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="ext-token">
-                  {t("settings.dataSource.externalToken")}
-                </Label>
-                <Input
-                  id="ext-token"
-                  type="password"
-                  placeholder={
-                    local.externalApiToken === "********"
-                      ? t("settings.dataSource.externalToken.unchanged")
-                      : ""
-                  }
-                  value={
-                    local.externalApiToken === "********"
-                      ? ""
-                      : local.externalApiToken
-                  }
-                  onChange={(e) =>
-                    setLocal({ ...local, externalApiToken: e.target.value })
-                  }
-                />
-                <p className="text-xs text-muted-foreground">
-                  {t("settings.dataSource.externalToken.hint")}
-                </p>
-              </div>
-            </>
           )}
         </CardContent>
       </Card>

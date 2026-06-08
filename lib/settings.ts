@@ -4,17 +4,17 @@
 
 import { prisma } from "./prisma";
 
-export type DataSource = "simulator" | "external" | "passive";
+// "passive" = nothing auto-generates readings.
+// "live"    = the data engine runs: each device is fetched from its own
+//             apiUrl, falling back to its simulator params when the URL is
+//             absent or the fetch fails. (API config now lives per-device.)
+export type DataSource = "passive" | "live";
 
 export interface AppSettings {
   /** Where readings come from. */
   dataSource: DataSource;
-  /** URL the server polls when dataSource === "external". */
-  externalApiUrl: string;
-  /** Optional bearer token sent to the external API. */
-  externalApiToken: string;
-  /** How often the server-side simulator generates fake readings (sec). */
-  simulatorIntervalSec: number;
+  /** How often the data engine polls/simulates one round of readings (sec). */
+  pollIntervalSec: number;
   /** How often the client charts/lists refetch (sec). Bell stays at 10s. */
   chartRefreshSec: number;
   /** How many days raw SensorReading rows are kept (rest auto-pruned). */
@@ -23,12 +23,20 @@ export interface AppSettings {
 
 export const DEFAULT_SETTINGS: AppSettings = {
   dataSource: "passive",
-  externalApiUrl: "",
-  externalApiToken: "",
-  simulatorIntervalSec: 5,
+  pollIntervalSec: 30,
   chartRefreshSec: 15,
   sensorRetentionDays: 30,
 };
+
+/** Map any stored/legacy dataSource value onto the current two-mode model. */
+function normalizeDataSource(value: unknown): DataSource {
+  if (value === "passive") return "passive";
+  // Legacy "simulator"/"external" (and "live") all mean the engine is on.
+  if (value === "live" || value === "simulator" || value === "external") {
+    return "live";
+  }
+  return DEFAULT_SETTINGS.dataSource;
+}
 
 const KEY = "app";
 
@@ -37,7 +45,11 @@ export async function getSettings(): Promise<AppSettings> {
   if (!row) return { ...DEFAULT_SETTINGS };
   try {
     const parsed = JSON.parse(row.value) as Partial<AppSettings>;
-    return { ...DEFAULT_SETTINGS, ...parsed };
+    return {
+      ...DEFAULT_SETTINGS,
+      ...parsed,
+      dataSource: normalizeDataSource(parsed.dataSource),
+    };
   } catch {
     return { ...DEFAULT_SETTINGS };
   }

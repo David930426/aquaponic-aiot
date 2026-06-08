@@ -35,6 +35,11 @@ const SINGLE_ENDPOINTS: Endpoint[] = [
     description: "Dissolved oxygen reading in mg/L (typical safe range 5–12).",
     sample: { value: 8.4 },
   },
+  {
+    path: "/api/ingest/flow",
+    description: "Water flow rate in L/min (typical safe range 10–60).",
+    sample: { value: 35.2 },
+  },
 ];
 
 export default function IngestDocsPage() {

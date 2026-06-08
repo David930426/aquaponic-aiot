@@ -5,13 +5,10 @@ import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/axios";
 import type { AppSettings } from "@/lib/settings";
 
-export interface AppSettingsView extends Omit<AppSettings, "externalApiToken"> {
-  externalApiToken: string; // "********" when masked, "" when unset
-}
+export type AppSettingsView = AppSettings;
 
 /**
- * Fetch app-wide settings (data source, chart refresh interval, retention, …).
- * The token is masked when read; admins can still overwrite it via PATCH.
+ * Fetch app-wide settings (data source, poll interval, chart refresh, retention).
  */
 export function useAppSettings() {
   return useQuery({

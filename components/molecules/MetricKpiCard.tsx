@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Activity,
   ArrowDown,
   ArrowUp,
   CheckCircle2,
@@ -60,6 +61,13 @@ const META: Record<KpiCard["key"], IconMeta> = {
     labelKey: "dashboard.kpi.waterLevel",
     formatValue: (v) => `${Math.round(v)}%`,
   },
+  flow: {
+    icon: Activity,
+    iconBg: "#E8F5E9",
+    iconColor: "#2E7D32",
+    labelKey: "dashboard.kpi.waterFlow",
+    formatValue: (v, u) => `${v.toFixed(1)} ${u}`,
+  },
 };
 
 interface TrendMeta {
@@ -102,6 +110,7 @@ function formatDelta(kpi: KpiCard): string {
   if (kpi.key === "temp") return `(${sign}${kpi.delta.toFixed(1)}°C)`;
   if (kpi.key === "ph") return `(${sign}${kpi.delta.toFixed(1)})`;
   if (kpi.key === "do") return `(${sign}${kpi.delta.toFixed(1)} mg/L)`;
+  if (kpi.key === "flow") return `(${sign}${kpi.delta.toFixed(1)} L/min)`;
   return `(${sign}${Math.round(kpi.delta)}%)`;
 }
 

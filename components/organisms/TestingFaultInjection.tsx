@@ -30,6 +30,7 @@ const SENSOR_TYPES = new Set([
   "sensor_ph",
   "sensor_level",
   "sensor_do",
+  "sensor_flow",
 ]);
 
 const FAULT_MODES: {

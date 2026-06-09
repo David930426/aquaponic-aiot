@@ -2,7 +2,13 @@
 // Used by both the per-sensor REST routes and the in-process simulator.
 
 import { prisma } from "./prisma";
+import { broadcastPush } from "./push";
 import { getThresholdSettings, isSensorMetric } from "./thresholds";
+
+// Don't re-notify (bell + push) for the same device while an incident is
+// ongoing — only the first breach within this window surfaces a notification.
+// The Alert/Anomaly records are still written every time.
+const NOTIFY_COOLDOWN_MS = 15 * 60 * 1000;
 
 export interface IngestReading {
   /** Device document id (e.g. "dev-003"). */
@@ -89,6 +95,16 @@ export async function ingestReading(r: IngestReading): Promise<IngestResult> {
     safeMax,
   );
 
+  // Was this device already alerting recently? (checked BEFORE we insert the
+  // new alert, so a fresh incident still counts as "first".)
+  const recentAlert = await prisma.alert.findFirst({
+    where: {
+      deviceId: device.id,
+      triggeredAt: { gte: new Date(Date.now() - NOTIFY_COOLDOWN_MS) },
+    },
+    select: { id: true },
+  });
+
   const alert = await prisma.alert.create({
     data: {
       zoneId: device.zoneId,
@@ -114,6 +130,27 @@ export async function ingestReading(r: IngestReading): Promise<IngestResult> {
       recordedAt,
     },
   });
+
+  // Surface the anomaly in the bell + as a push — but only on the first breach
+  // of an incident, so an ongoing fault doesn't spam a popup every poll.
+  if (!recentAlert) {
+    const notif = await prisma.notification.create({
+      data: {
+        title: `${severity === "critical" ? "🔴" : "⚠️"} ${device.name}`,
+        body: message,
+      },
+    });
+    // Best-effort: never let a push failure (e.g. VAPID unset) break ingestion.
+    await broadcastPush({
+      title: notif.title,
+      body: notif.body,
+      url: "/alerts",
+      tag: `alert-${device.id}`,
+      notificationId: notif.id,
+    }).catch((err) =>
+      console.error("[ingest] alert push failed:", (err as Error).message),
+    );
+  }
 
   return {
     deviceId: device.id,
